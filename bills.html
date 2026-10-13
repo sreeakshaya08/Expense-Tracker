@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Savii - Bills</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #f9f9fb;
+      color: #333;
+    }
+
+    header {
+      background: #002b5b;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .add-btn {
+      background: #00a86b;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 230px;
+      height: 100vh;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      padding-top: 5rem;
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      padding: 1rem 2rem;
+      color: #333;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background: #f0f0f0;
+    }
+
+    .sidebar a i {
+      margin-right: 1rem;
+    }
+
+    main {
+      margin-left: 230px;
+      padding: 2rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .bill-card {
+      background: #fff;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 0.75rem;
+      width: 400px;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .modal-content button {
+      background: #002b5b;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .modal-content button:last-child {
+      background: #6c757d;
+    }
+
+    .modal-content button:hover {
+      opacity: 0.9;
+    }
+
+    .pay-btn {
+      background: #00a86b !important;
+      color: white;
+      border: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
+    }
+
+    .pay-btn:hover {
+      background: #008f5a !important;
+    }
+
+    .modal-content select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 0.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-content label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MoneyVault</h1>
+    <button class="add-btn" onclick="openModal()">Add Bill</button>
+  </header>
+  <div class="sidebar">
+    <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+    <a href="accounts.html"><i class="fas fa-university"></i> Accounts</a>
+    <a href="transactions.html"><i class="fas fa-credit-card"></i> Transactions</a>
+    <a href="budgets.html"><i class="fas fa-chart-pie"></i> Budgets</a>
+    <a href="bills.html"><i class="fas fa-file-invoice"></i> Bills</a>
+    <a href="emi.html"><i class="fas fa-calendar-alt"></i> EMI</a>
+
+    <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+  </div>
+  <main>
+    <div class="section-header">
+      <h2>My Bills</h2>
+    </div>
+    <div id="billsList"></div>
+  </main>
+
+  <div class="modal" id="billModal">
+    <div class="modal-content">
+      <h3>Add New Bill</h3>
+      <input type="text" id="billName" placeholder="Bill Name">
+      <input type="number" id="billAmount" placeholder="Amount">
+      <input type="date" id="billDue">
+      <div class="modal-actions">
+        <button onclick="saveBill()">Save</button>
+        <button onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal" id="paymentModal">
+    <div class="modal-content">
+      <h3>Pay Bill</h3>
+      <div id="billPaymentInfo" style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 0.5rem;"></div>
+      <label for="paymentAccount">Select Account:</label>
+      <select id="paymentAccount" required>
+        <option value="">Choose an account...</option>
+      </select>
+      <div class="modal-actions">
+        <button onclick="confirmPayment()">Pay Bill</button>
+        <button onclick="closePaymentModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="frontend/js/api.js?v=2"></script>
+  <script>
+    // Debug: Check if API is loaded correctly
+    console.log('API object:', api);
+    console.log('payBill function:', typeof api.payBill);
+
+    // Check authentication
+    if (!api.isAuthenticated()) {
+      alert("Please log in first.");
+      window.location.href = "login.html";
+    }
+
+    function openModal() {
+      document.getElementById('billModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('billModal').style.display = 'none';
+      // Clear form fields
+      document.getElementById('billName').value = '';
+      document.getElementById('billAmount').value = '';
+      document.getElementById('billDue').value = '';
+    }
+
+    async function saveBill() {
+      const name = document.getElementById('billName').value.trim();
+      const amount = parseFloat(document.getElementById('billAmount').value);
+      const due_date = document.getElementById('billDue').value;
+
+      if (!name || isNaN(amount) || amount <= 0 || !due_date) {
+        alert("Please fill in all fields with valid data");
+        return;
+      }
+
+      try {
+        // Show loading state
+        const saveBtn = document.querySelector('#billModal button');
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = 'Saving...';
+        saveBtn.disabled = true;
+
+        const response = await api.createBill({ name, amount, due_date });
+
+        if (response.success) {
+          closeModal();
+          await renderBills();
+          alert("Bill created successfully!");
+        } else {
+          alert(response.message || "Failed to create bill");
+        }
+      } catch (error) {
+        console.error('Create bill error:', error);
+        alert(error.message || "Failed to create bill. Please try again.");
+      } finally {
+        // Reset button state
+        const saveBtn = document.querySelector('#billModal button');
+        saveBtn.textContent = 'Save';
+        saveBtn.disabled = false;
+      }
+    }
+
+    async function renderBills() {
+      try {
+        const response = await api.getBills();
+
+        if (response.success) {
+          const bills = response.data.bills;
+          const container = document.getElementById('billsList');
+          container.innerHTML = '';
+
+          if (bills.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #666;">No bills found. Add your first bill!</p>';
+            return;
+          }
+
+          bills.forEach(bill => {
+            const div = document.createElement('div');
+            div.className = 'bill-card';
+
+            // Determine status color
+            const statusColor = bill.status === 'paid' ? '#00a86b' :
+                               bill.status === 'overdue' ? '#e74c3c' : '#f39c12';
+
+            // Add pay button for pending bills
+            const payButton = bill.status === 'pending' ?
+              `<button class="pay-btn" onclick="openPaymentModal(${bill.id}, '${bill.name}', ${bill.amount})">Pay Now</button>` : '';
+
+            div.innerHTML = `
+              <strong>${bill.name}</strong><br>
+              ₹${parseFloat(bill.amount).toFixed(2)} due on ${new Date(bill.due_date).toLocaleDateString()}<br>
+              <span style="color: ${statusColor}; font-weight: bold; text-transform: uppercase;">${bill.status}</span>
+              ${payButton}
+            `;
+            container.appendChild(div);
+          });
+        } else {
+          console.error('Failed to load bills:', response.message);
+          document.getElementById('billsList').innerHTML = '<p style="text-align: center; color: red;">Failed to load bills</p>';
+        }
+      } catch (error) {
+        console.error('Error loading bills:', error);
+        document.getElementById('billsList').innerHTML = '<p style="text-align: center; color: red;">Error loading bills</p>';
+      }
+    }
+
+    // Payment modal functions
+    let currentBillId = null;
+
+    // Fallback payBill function in case API doesn't load
+    async function payBillDirect(billId, accountId) {
+      const token = localStorage.getItem('moneyvault_token') || localStorage.getItem('savii_token');
+      const response = await fetch(`http://localhost:3001/api/bills/${billId}/pay`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ account_id: accountId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Payment failed');
+      }
+      return data;
+    }
+
+    async function openPaymentModal(billId, billName, billAmount) {
+      currentBillId = billId;
+
+      // Load user accounts
+      try {
+        const response = await api.getAccounts();
+        if (response.success) {
+          const accounts = response.data.accounts;
+          const accountSelect = document.getElementById('paymentAccount');
+          accountSelect.innerHTML = '<option value="">Choose an account...</option>';
+
+          accounts.forEach(account => {
+            const option = document.createElement('option');
+            option.value = account.id;
+            option.textContent = `${account.name} (${account.bank_name}) - ₹${parseFloat(account.balance).toFixed(2)}`;
+            option.disabled = parseFloat(account.balance) < billAmount;
+            accountSelect.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading accounts:', error);
+      }
+
+      // Show bill info
+      document.getElementById('billPaymentInfo').innerHTML = `
+        <strong>Bill:</strong> ${billName}<br>
+        <strong>Amount:</strong> ₹${billAmount.toFixed(2)}
+      `;
+
+      document.getElementById('paymentModal').style.display = 'flex';
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').style.display = 'none';
+      currentBillId = null;
+      document.getElementById('paymentAccount').value = '';
+    }
+
+    async function confirmPayment() {
+      const accountId = document.getElementById('paymentAccount').value;
+
+      if (!accountId) {
+        alert('Please select an account to pay from');
+        return;
+      }
+
+      if (!currentBillId) {
+        alert('No bill selected');
+        return;
+      }
+
+      // Check if payBill function exists
+      if (typeof api.payBill !== 'function') {
+        alert('Payment function not available. Please refresh the page and try again.');
+        console.error('api.payBill is not a function. API object:', api);
+        return;
+      }
+
+      try {
+        // Show loading state
+        const payBtn = document.querySelector('#paymentModal button');
+        const originalText = payBtn.textContent;
+        payBtn.textContent = 'Processing...';
+        payBtn.disabled = true;
+
+        // Try API function first, fallback to direct function
+        const response = typeof api.payBill === 'function'
+          ? await api.payBill(currentBillId, accountId)
+          : await payBillDirect(currentBillId, accountId);
+
+        if (response.success) {
+          closePaymentModal();
+          await renderBills();
+          alert('Bill paid successfully! Account balance updated and transaction recorded.');
+        } else {
+          alert(response.message || 'Failed to pay bill');
+        }
+      } catch (error) {
+        console.error('Pay bill error:', error);
+        alert(error.message || 'Failed to pay bill. Please try again.');
+      } finally {
+        // Reset button state
+        const payBtn = document.querySelector('#paymentModal button');
+        payBtn.textContent = 'Pay Bill';
+        payBtn.disabled = false;
+      }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('billModal').addEventListener('click', (e) => {
+      if (e.target.id === 'billModal') {
+        closeModal();
+      }
+    });
+
+    document.getElementById('paymentModal').addEventListener('click', (e) => {
+      if (e.target.id === 'paymentModal') {
+        closePaymentModal();
+      }
+    });
+
+    // Load bills when page loads
+    document.addEventListener('DOMContentLoaded', renderBills);
+  </script>
+</body>
+</html>

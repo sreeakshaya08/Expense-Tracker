@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MoneyVault - Create Your Wealth Account</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1a1a2e 100%);
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="40" opacity="0.08">💎</text></svg>') repeat;
+      animation: float 25s infinite linear;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); }
+      100% { transform: translateY(-100vh) rotate(360deg); }
+    }
+
+    .container {
+      background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+      padding: 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+      width: 400px;
+      animation: fadeIn 1s ease;
+      border: 3px solid #ffd700;
+      position: relative;
+      z-index: 10;
+    }
+
+    .container::before {
+      content: '💎';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 2rem;
+      background: #ffd700;
+      padding: 10px;
+      border-radius: 50%;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: scale(0.95) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    h2 {
+      text-align: center;
+      color: #1a1a2e;
+      font-size: 1.6rem;
+      margin-bottom: 1.5rem;
+      font-weight: bold;
+    }
+
+    h2::before {
+      content: '💰 ';
+      color: #ffd700;
+    }
+
+    h2::after {
+      content: ' 💰';
+      color: #ffd700;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 1rem;
+      margin: 0.8rem 0;
+      border-radius: 12px;
+      border: 2px solid #e9ecef;
+      box-sizing: border-box;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      border-color: #ffd700;
+      outline: none;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    }
+
+    button {
+      background: linear-gradient(135deg, #00b894 0%, #00a383 100%);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #00a383 0%, #008f72 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .link a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .link a:hover {
+      text-decoration: underline;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+    }
+
+    .success {
+      color: green;
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Create Your Wealth Vault</h2>
+    <form id="signupForm">
+      <input type="text" id="firstname" placeholder="💼 First Name" required />
+      <input type="text" id="lastname" placeholder="👤 Last Name" />
+      <input type="email" id="email" placeholder="📧 Email Address" required />
+      <input type="password" id="password" placeholder="🔐 Secure Password (min 6 characters)" required minlength="6" />
+      <input type="password" id="confirmPassword" placeholder="🔑 Confirm Password" required />
+      <div id="errorMessage" class="error"></div>
+      <div id="successMessage" class="success"></div>
+      <button type="submit">🏦 Create My Vault</button>
+    </form>
+
+    <div class="link">
+      <span>Already have a vault? <a href="login.html">Access Your Vault</a></span>
+    </div>
+  </div>
+
+  <script src="frontend/js/api.js"></script>
+  <script>
+    const form = document.getElementById('signupForm');
+    const errorDiv = document.getElementById('errorMessage');
+    const successDiv = document.getElementById('successMessage');
+
+    function showError(message) {
+      errorDiv.textContent = message;
+      successDiv.textContent = '';
+    }
+
+    function showSuccess(message) {
+      successDiv.textContent = message;
+      errorDiv.textContent = '';
+    }
+
+    function clearMessages() {
+      errorDiv.textContent = '';
+      successDiv.textContent = '';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMessages();
+
+      const firstname = document.getElementById('firstname').value.trim();
+      const lastname = document.getElementById('lastname').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      // Validation
+      if (!firstname) {
+        showError('First name is required');
+        return;
+      }
+
+      if (!email) {
+        showError('Email is required');
+        return;
+      }
+
+      if (password.length < 6) {
+        showError('Password must be at least 6 characters long');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showError('Passwords do not match');
+        return;
+      }
+
+      try {
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Creating Account...';
+        submitBtn.disabled = true;
+
+        const userData = {
+          firstname,
+          lastname,
+          email,
+          password
+        };
+
+        const response = await api.register(userData);
+        
+        if (response.success) {
+          showSuccess('🎉 Your MoneyVault has been created successfully! Redirecting to secure login...');
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 2000);
+        } else {
+          showError(response.message || 'Vault creation failed');
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        showError(error.message || 'Registration failed. Please try again.');
+      } finally {
+        // Reset button state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.textContent = 'Sign Up';
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Check if user is already logged in
+    if (api.isAuthenticated()) {
+      window.location.href = "dashboard.html";
+    }
+  </script>
+</body>
+</html>

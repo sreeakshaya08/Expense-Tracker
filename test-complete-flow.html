@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyVault Complete Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+        .test-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        button {
+            background: #ffd700;
+            color: #1a1a2e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        .result {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff6b6b; }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏦 MoneyVault Complete Flow Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Authentication</h3>
+        <input type="email" id="email" placeholder="Email" value="test@moneyvault.com">
+        <input type="password" id="password" placeholder="Password" value="password123">
+        <button onclick="login()">Login</button>
+        <div id="authResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Account Management</h3>
+        <button onclick="getAccounts()">Get Accounts</button>
+        <button onclick="createAccount()">Create Test Account</button>
+        <div id="accountResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Bill Management</h3>
+        <button onclick="getBills()">Get Bills</button>
+        <button onclick="createBill()">Create Test Bill</button>
+        <div id="billResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Bill Payment</h3>
+        <select id="accountSelect">
+            <option value="">Select Account</option>
+        </select>
+        <select id="billSelect">
+            <option value="">Select Bill</option>
+        </select>
+        <button onclick="payBill()">Pay Bill</button>
+        <div id="paymentResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>5. Transaction History</h3>
+        <button onclick="getTransactions()">Get Transactions</button>
+        <div id="transactionResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let authToken = '';
+        let accounts = [];
+        let bills = [];
+
+        function addResult(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            const div = document.createElement('div');
+            div.className = isSuccess ? 'success' : 'error';
+            div.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            element.appendChild(div);
+        }
+
+        async function login() {
+            try {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.data.token;
+                    addResult('authResult', `✅ Login successful for ${data.data.user.firstname}`);
+                } else {
+                    addResult('authResult', `❌ Login failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                addResult('authResult', `❌ Login error: ${error.message}`, false);
+            }
+        }
+
+        async function getAccounts() {
+            try {
+                const response = await fetch(`${API_BASE}/accounts`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    accounts = data.data.accounts;
+                    addResult('accountResult', `✅ Found ${accounts.length} accounts`);
+                    
+                    // Populate account select
+                    const select = document.getElementById('accountSelect');
+                    select.innerHTML = '<option value="">Select Account</option>';
+                    accounts.forEach(acc => {
+                        const option = document.createElement('option');
+                        option.value = acc.id;
+                        option.textContent = `${acc.name} - ₹${acc.balance}`;
+                        select.appendChild(option);
+                    });
+                    
+                    accounts.forEach(acc => {
+                        addResult('accountResult', `  - ${acc.name}: ₹${acc.balance}`);
+                    });
+                } else {
+                    addResult('accountResult', `❌ Get accounts failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                addResult('accountResult', `❌ Get accounts error: ${error.message}`, false);
+            }
+        }
+
+        async function createAccount() {
+            try {
+                const response = await fetch(`${API_BASE}/accounts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        name: 'Test Savings Account',
+                        bank_name: 'MoneyVault Bank',
+                        balance: 10000
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    addResult('accountResult', `✅ Account created: ${data.data.account.name}`);
+                    getAccounts(); // Refresh accounts
+                } else {
+                    addResult('accountResult', `❌ Create account failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                addResult('accountResult', `❌ Create account error: ${error.message}`, false);
+            }
+        }
+
+        async function getBills() {
+            try {
+                const response = await fetch(`${API_BASE}/bills`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    bills = data.data.bills;
+                    addResult('billResult', `✅ Found ${bills.length} bills`);
+                    
+                    // Populate bill select
+                    const select = document.getElementById('billSelect');
+                    select.innerHTML = '<option value="">Select Bill</option>';
+                    bills.forEach(bill => {
+                        const option = document.createElement('option');
+                        option.value = bill.id;
+                        option.textContent = `${bill.name} - ₹${bill.amount} (${bill.status})`;
+                        select.appendChild(option);
+                    });
+                    
+                    bills.forEach(bill => {
+                        addResult('billResult', `  - ${bill.name}: ₹${bill.amount} (${bill.status})`);
+                    });
+                } else {
+                    addResult('billResult', `❌ Get bills failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                addResult('billResult', `❌ Get bills error: ${error.message}`, false);
+            }
+        }
+
+        async function createBill() {
+            try {
+                const response = await fetch(`${API_BASE}/bills`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        name: 'Test Electricity Bill',
+                        amount: 250,
+                        due_date: '2025-06-20'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    addResult('billResult', `✅ Bill created: ${data.data.bill.name}`);
+                    getBills(); // Refresh bills
+                } else {
+                    addResult('billResult', `❌ Create bill failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                addResult('billResult', `❌ Create bill error: ${error.message}`, false);
+            }
+        }
+
+        async function payBill() {
+            try {
+                const accountId = document.getElementById('accountSelect').value;
+                const billId = document.getElementById('billSelect').value;
+                
+                if (!accountId || !billId) {
+                    addResult('paymentResult', '❌ Please select both account and bill', false);
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/bills/${billId}/pay`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ account_id: accountId })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    addResult('paymentResult', `✅ Bill payment successful!`);
+                    addResult('paymentResult', `  Transaction ID: ${data.data.transaction_id}`);
+                    addResult('paymentResult', `  New account balance: ₹${data.data.new_balance}`);
+                    
+                    // Refresh data
+                    getAccounts();
+                    getBills();
+                } else {
+                    addResult('paymentResult', `❌ Bill payment failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                addResult('paymentResult', `❌ Bill payment error: ${error.message}`, false);
+            }
+        }
+
+        async function getTransactions() {
+            try {
+                const response = await fetch(`${API_BASE}/transactions`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    const transactions = data.data.transactions;
+                    addResult('transactionResult', `✅ Found ${transactions.length} transactions`);
+                    
+                    transactions.forEach(txn => {
+                        addResult('transactionResult', 
+                            `  ${txn.date} - ${txn.description}: ₹${txn.amount} (${txn.type})`);
+                    });
+                } else {
+                    addResult('transactionResult', `❌ Get transactions failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                addResult('transactionResult', `❌ Get transactions error: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html>

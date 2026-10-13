@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile - Savii</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #f9f9fb;
+      color: #333;
+    }
+
+    header {
+      background: #002b5b;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .back-btn {
+      background: #555;
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.4rem;
+      margin-right: 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    main {
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .profile-container {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .profile-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      background: #002b5b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      color: white;
+      font-size: 2rem;
+    }
+
+    .profile-name {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .profile-email {
+      color: #666;
+      font-size: 1rem;
+    }
+
+    .profile-section {
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #002b5b;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .info-card {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border-left: 4px solid #002b5b;
+    }
+
+    .info-label {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #002b5b, #004080);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: #002b5b;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    .error {
+      text-align: center;
+      padding: 2rem;
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex; align-items:center;">
+      <a href="dashboard.html" class="back-btn">← Back</a>
+      <h1>Profile</h1>
+    </div>
+  </header>
+
+  <main>
+    <div class="profile-container" id="profileContainer">
+      <div class="loading">Loading profile...</div>
+    </div>
+  </main>
+
+  <script src="frontend/js/api.js"></script>
+  <script>
+    // Check authentication
+    if (!api.isAuthenticated()) {
+      alert("Please log in first.");
+      window.location.href = "login.html";
+    }
+
+    async function loadProfile() {
+      try {
+        // Get user profile
+        const profileResponse = await api.getProfile();
+        
+        // Get dashboard data for stats
+        const dashboardResponse = await api.getDashboardData();
+        
+        // Get account summary
+        const accountsResponse = await api.getAccountSummary();
+        
+        if (profileResponse.success) {
+          renderProfile(profileResponse.data.user, dashboardResponse.data, accountsResponse.data);
+        } else {
+          document.getElementById('profileContainer').innerHTML = 
+            '<div class="error">Failed to load profile</div>';
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        document.getElementById('profileContainer').innerHTML = 
+          '<div class="error">Error loading profile</div>';
+      }
+    }
+
+    function renderProfile(user, dashboardData, accountData) {
+      const container = document.getElementById('profileContainer');
+      
+      // Get user initials for avatar
+      const initials = (user.firstname.charAt(0) + (user.lastname ? user.lastname.charAt(0) : '')).toUpperCase();
+      
+      // Calculate stats
+      const totalBalance = dashboardData?.summary?.total_balance || 0;
+      const monthlyIncome = dashboardData?.summary?.monthly_income || 0;
+      const monthlyExpenses = dashboardData?.summary?.monthly_expenses || 0;
+      const totalAccounts = accountData?.summary?.total_accounts || 0;
+      
+      container.innerHTML = `
+        <div class="profile-header">
+          <div class="profile-avatar">${initials}</div>
+          <div class="profile-name">${user.firstname} ${user.lastname || ''}</div>
+          <div class="profile-email">${user.email}</div>
+        </div>
+
+        <div class="profile-section">
+          <div class="section-title">Account Information</div>
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-label">First Name</div>
+              <div class="info-value">${user.firstname}</div>
+            </div>
+            <div class="info-card">
+              <div class="info-label">Last Name</div>
+              <div class="info-value">${user.lastname || 'Not provided'}</div>
+            </div>
+            <div class="info-card">
+              <div class="info-label">Email Address</div>
+              <div class="info-value">${user.email}</div>
+            </div>
+            <div class="info-card">
+              <div class="info-label">Member Since</div>
+              <div class="info-value">${new Date().getFullYear()}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="section-title">Financial Overview</div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-number">₹${totalBalance.toFixed(0)}</div>
+              <div class="stat-label">Total Balance</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">${totalAccounts}</div>
+              <div class="stat-label">Bank Accounts</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">₹${monthlyIncome.toFixed(0)}</div>
+              <div class="stat-label">Monthly Income</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">₹${monthlyExpenses.toFixed(0)}</div>
+              <div class="stat-label">Monthly Expenses</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="editProfile()">
+            <i class="fas fa-edit"></i> Edit Profile
+          </button>
+          <button class="btn btn-secondary" onclick="changePassword()">
+            <i class="fas fa-key"></i> Change Password
+          </button>
+          <button class="btn btn-danger" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      `;
+    }
+
+    function editProfile() {
+      alert('Edit profile functionality coming soon!');
+    }
+
+    function changePassword() {
+      alert('Change password functionality coming soon!');
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        api.logout();
+      }
+    }
+
+    // Load profile when page loads
+    document.addEventListener('DOMContentLoaded', loadProfile);
+  </script>
+</body>
+</html>

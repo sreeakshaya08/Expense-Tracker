@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MoneyVault - Secure Login</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1a1a2e 100%);
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50" opacity="0.1">💰</text></svg>') repeat;
+      animation: float 20s infinite linear;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); }
+      100% { transform: translateY(-100vh) rotate(360deg); }
+    }
+
+    .container {
+      background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+      padding: 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+      width: 350px;
+      animation: fadeIn 1s ease;
+      border: 3px solid #ffd700;
+      position: relative;
+      z-index: 10;
+    }
+
+    .container::before {
+      content: '🏦';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 2rem;
+      background: #ffd700;
+      padding: 10px;
+      border-radius: 50%;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: scale(0.95) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    h2 {
+      text-align: center;
+      color: #1a1a2e;
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      font-weight: bold;
+    }
+
+    h2::before {
+      content: '💰 ';
+      color: #ffd700;
+    }
+
+    h2::after {
+      content: ' 💰';
+      color: #ffd700;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 1rem;
+      margin: 0.8rem 0;
+      border-radius: 12px;
+      border: 2px solid #e9ecef;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      border-color: #ffd700;
+      outline: none;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    }
+
+    button {
+      background: linear-gradient(135deg, #00b894 0%, #00a383 100%);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #00a383 0%, #008f72 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .link a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>MoneyVault Access</h2>
+    <input type="email" id="loginEmail" placeholder="🔐 Enter Your Vault Email" />
+    <input type="password" id="loginPassword" placeholder="🔑 Enter Your Secure Password" />
+    <button onclick="login()">🏦 Access My Vault</button>
+    
+    <div class="link">
+      <a href="forgot.html">Forgot Password?</a><br/>
+      <span>Don't have an account? <a href="signup.html">Sign up</a></span>
+    </div>
+  </div>
+
+  <script src="frontend/js/api.js"></script>
+  <script>
+    async function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      if (!email || !password) {
+        alert("Please enter both email and password");
+        return;
+      }
+
+      try {
+        // Show loading state
+        const loginBtn = document.querySelector('button');
+        const originalText = loginBtn.textContent;
+        loginBtn.textContent = 'Logging in...';
+        loginBtn.disabled = true;
+
+        const response = await api.login({ email, password });
+
+        if (response.success) {
+          alert("🎉 Vault Access Granted! Welcome to your MoneyVault!");
+          window.location.href = "dashboard.html";
+        } else {
+          alert(response.message || "Vault access denied");
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert(error.message || "Login failed. Please try again.");
+      } finally {
+        // Reset button state
+        const loginBtn = document.querySelector('button');
+        loginBtn.textContent = 'Login';
+        loginBtn.disabled = false;
+      }
+    }
+
+    // Check if user is already logged in
+    if (api.isAuthenticated()) {
+      window.location.href = "dashboard.html";
+    }
+  </script>
+</body>
+</html>

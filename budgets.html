@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Savii | Budgets</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      color: #111;
+    }
+
+    .top-bar {
+      background-color: #0b2c53;
+      padding: 20px;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .back-btn {
+      background-color: white;
+      color: #0b2c53;
+      border: none;
+      font-weight: bold;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 0.9rem;
+    }
+
+    .back-btn:hover {
+      background-color: #e2e2e2;
+    }
+
+    .main {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .main h2 {
+      margin-bottom: 10px;
+    }
+
+    .budget-item {
+      margin-bottom: 30px;
+    }
+
+    .budget-item h4 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .progress-bar-container {
+      background-color: #ddd;
+      border-radius: 8px;
+      height: 10px;
+      overflow: hidden;
+      margin: 6px 0;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background-color: #0b2c53;
+      transition: width 0.3s ease-in-out;
+    }
+
+    .budget-footer {
+      font-size: 0.9em;
+      color: #333;
+    }
+
+    .over-budget {
+      color: red;
+    }
+
+    .edit-input {
+      margin-top: 10px;
+    }
+
+    .edit-input input {
+      width: 100px;
+      padding: 5px;
+      font-size: 0.9rem;
+    }
+
+    .edit-input button {
+      padding: 5px 12px;
+      margin-left: 5px;
+      background-color: #0b2c53;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .edit-input button:hover {
+      background-color: #144984;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    Budgets Overview
+    <span></span> <!-- just for spacing -->
+  </div>
+
+  <div class="main">
+    <h2>Manage Your Budgets</h2>
+    <div id="budgetList"></div>
+  </div>
+
+  <script src="frontend/js/api.js"></script>
+  <script>
+    // Check authentication
+    if (!api.isAuthenticated()) {
+      alert("Please log in first.");
+      window.location.href = "login.html";
+    }
+
+    let budgets = [];
+
+    async function loadBudgets() {
+      try {
+        const response = await api.getBudgets();
+
+        if (response.success) {
+          budgets = response.data.budgets.map(budget => ({
+            id: budget.id,
+            name: budget.category_name,
+            limit: parseFloat(budget.limit_amount),
+            spent: parseFloat(budget.spent_amount)
+          }));
+          renderBudgets();
+        } else {
+          console.error('Failed to load budgets:', response.message);
+          document.getElementById("budgetList").innerHTML = '<p style="text-align: center; color: red;">Failed to load budgets</p>';
+        }
+      } catch (error) {
+        console.error('Error loading budgets:', error);
+        document.getElementById("budgetList").innerHTML = '<p style="text-align: center; color: red;">Error loading budgets</p>';
+      }
+    }
+
+    function renderBudgets() {
+      const container = document.getElementById("budgetList");
+      container.innerHTML = '';
+
+      if (budgets.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666;">No budgets found.</p>';
+        return;
+      }
+
+      budgets.forEach((cat, index) => {
+        const percent = cat.limit === 0 ? 0 : Math.min((cat.spent / cat.limit) * 100, 100);
+        const remainingPercent = cat.limit === 0 ? 0 : Math.max(0, 100 - Math.floor((cat.spent / cat.limit) * 100));
+        const isOver = cat.spent > cat.limit && cat.limit > 0;
+
+        const item = document.createElement("div");
+        item.className = "budget-item";
+        item.innerHTML = `
+          <h4>${cat.name}</h4>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: ${percent}%; background-color: ${isOver ? '#e74c3c' : '#0b2c53'};"></div>
+          </div>
+          <div class="budget-footer ${isOver ? 'over-budget' : ''}">
+            ${isOver
+              ? `Over budget by ₹${(cat.spent - cat.limit).toFixed(2)}`
+              : cat.limit > 0 ? `${remainingPercent}% remaining` : 'No limit set'}
+            &nbsp;| ₹${cat.spent.toFixed(2)} / ₹${cat.limit.toFixed(2)}
+          </div>
+          <div class="edit-input">
+            <label>Edit Budget Limit: </label>
+            <input type="number" id="edit-limit-${index}" value="${cat.limit}" step="0.01" min="0" />
+            <label style="margin-left:10px;">Spent: </label>
+            <input type="number" id="edit-spent-${index}" value="${cat.spent}" step="0.01" min="0" />
+            <button onclick="updateBudget(${index})">Save</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    async function updateBudget(index) {
+      const newLimit = parseFloat(document.getElementById(`edit-limit-${index}`).value);
+      const newSpent = parseFloat(document.getElementById(`edit-spent-${index}`).value);
+
+      if (isNaN(newLimit) || isNaN(newSpent) || newLimit < 0 || newSpent < 0) {
+        alert("Please enter valid positive numbers.");
+        return;
+      }
+
+      try {
+        const budget = budgets[index];
+        const updateData = {
+          category_name: budget.name,
+          limit_amount: newLimit,
+          spent_amount: newSpent
+        };
+
+        const response = await api.updateBudget(budget.id, updateData);
+
+        if (response.success) {
+          budgets[index].limit = newLimit;
+          budgets[index].spent = newSpent;
+          renderBudgets();
+          alert("Budget updated successfully!");
+        } else {
+          alert(response.message || "Failed to update budget");
+        }
+      } catch (error) {
+        console.error('Update budget error:', error);
+        alert(error.message || "Failed to update budget. Please try again.");
+      }
+    }
+
+    function goBack() {
+      window.location.href = "dashboard.html";
+    }
+
+    // Load budgets when page loads
+    document.addEventListener('DOMContentLoaded', loadBudgets);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Savii - Forgot Password</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to top, #e0c3fc, #8ec5fc);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 20px 30px rgba(0,0,0,0.1);
+      width: 300px;
+      animation: zoomIn 0.6s ease;
+    }
+    @keyframes zoomIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    input, button {
+      width: 100%;
+      padding: 0.7rem;
+      margin: 0.5rem 0;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #0984e3;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0568c1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>Forgot Password</h3>
+    <input type="email" id="forgotEmail" placeholder="Your Email" />
+    <button onclick="sendOTP()">Send OTP</button>
+
+    <div id="otpSection" style="display:none;">
+      <input type="text" id="otp" placeholder="Enter OTP" />
+      <input type="password" id="newPassword" placeholder="New Password" />
+      <button onclick="resetPassword()">Reset Password</button>
+    </div>
+  </div>
+
+  <script src="frontend/js/api.js"></script>
+  <script>
+    let generatedOTP = "";
+    let userEmail = "";
+
+    async function sendOTP() {
+      const email = document.getElementById('forgotEmail').value.trim();
+
+      if (!email) {
+        alert("Please enter your email address");
+        return;
+      }
+
+      try {
+        // Show loading state
+        const sendBtn = document.querySelector('button');
+        const originalText = sendBtn.textContent;
+        sendBtn.textContent = 'Sending...';
+        sendBtn.disabled = true;
+
+        const response = await api.sendOTP(email);
+
+        if (response.success) {
+          userEmail = email;
+          generatedOTP = response.data.otp; // In production, this would be sent via email
+          alert("OTP sent to your email: " + generatedOTP); // Remove this in production
+          document.getElementById("otpSection").style.display = "block";
+        } else {
+          alert(response.message || "Failed to send OTP");
+        }
+      } catch (error) {
+        console.error('Send OTP error:', error);
+        alert(error.message || "Failed to send OTP. Please try again.");
+      } finally {
+        // Reset button state
+        const sendBtn = document.querySelector('button');
+        sendBtn.textContent = 'Send OTP';
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function resetPassword() {
+      const enteredOTP = document.getElementById('otp').value.trim();
+      const newPassword = document.getElementById('newPassword').value;
+
+      if (!enteredOTP || !newPassword) {
+        alert("Please enter both OTP and new password");
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        alert("Password must be at least 6 characters long");
+        return;
+      }
+
+      try {
+        // Show loading state
+        const resetBtn = document.querySelector('#otpSection button');
+        const originalText = resetBtn.textContent;
+        resetBtn.textContent = 'Resetting...';
+        resetBtn.disabled = true;
+
+        const response = await api.resetPassword({
+          email: userEmail,
+          otp: enteredOTP,
+          newPassword: newPassword
+        });
+
+        if (response.success) {
+          alert("Password reset successful!");
+          window.location.href = "login.html";
+        } else {
+          alert(response.message || "Password reset failed");
+        }
+      } catch (error) {
+        console.error('Reset password error:', error);
+        alert(error.message || "Password reset failed. Please try again.");
+      } finally {
+        // Reset button state
+        const resetBtn = document.querySelector('#otpSection button');
+        resetBtn.textContent = 'Reset Password';
+        resetBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyVault Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+        .test-container {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        button {
+            background: #ffd700;
+            color: #1a1a2e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+        }
+        .result {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <h1>🏦 MoneyVault Connection Test</h1>
+    
+    <div class="test-container">
+        <h3>API Connection Tests</h3>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <button onclick="testRegistration()">Test Registration</button>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            resultsDiv.appendChild(div);
+        }
+
+        async function testHealth() {
+            try {
+                addResult('Testing health endpoint...');
+                const response = await fetch('http://localhost:3001/health');
+                const data = await response.json();
+                addResult(`✅ Health check successful: ${data.message}`);
+            } catch (error) {
+                addResult(`❌ Health check failed: ${error.message}`, false);
+            }
+        }
+
+        async function testRegistration() {
+            try {
+                addResult('Testing user registration...');
+                const testUser = {
+                    firstname: 'WebTest',
+                    lastname: 'User',
+                    email: `webtest${Date.now()}@moneyvault.com`,
+                    password: 'password123'
+                };
+
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testUser)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    addResult(`✅ Registration successful: ${data.message}`);
+                    window.testToken = data.data.token;
+                    window.testUser = testUser;
+                } else {
+                    addResult(`❌ Registration failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                addResult(`❌ Registration error: ${error.message}`, false);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                if (!window.testUser) {
+                    addResult('❌ Please run registration test first', false);
+                    return;
+                }
+
+                addResult('Testing user login...');
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: window.testUser.email,
+                        password: window.testUser.password
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    addResult(`✅ Login successful: ${data.message}`);
+                } else {
+                    addResult(`❌ Login failed: ${data.message}`, false);
+                }
+            } catch (error) {
+                addResult(`❌ Login error: ${error.message}`, false);
+            }
+        }
+
+        // Auto-run health check on page load
+        window.addEventListener('load', () => {
+            setTimeout(testHealth, 1000);
+        });
+    </script>
+</body>
+</html>

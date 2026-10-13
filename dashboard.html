@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wealth Dashboard - MoneyVault</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      border-right: 3px solid #ffd700;
+      padding-top: 2rem;
+      animation: slideInLeft 0.6s ease-out;
+      box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #ffd700;
+      font-size: 1.8rem;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .sidebar h2::before {
+      content: "💰 ";
+      font-size: 1.5rem;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 1rem 1.5rem;
+      color: #e0e0e0;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar a i {
+      transition: transform 0.3s ease;
+      color: #ffd700;
+      font-size: 1.1rem;
+    }
+
+    .sidebar a:hover {
+      background: linear-gradient(90deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+      color: #ffd700;
+      border-left: 3px solid #ffd700;
+      transform: translateX(5px);
+    }
+
+    .sidebar a:hover i {
+      transform: translateX(5px) scale(1.1);
+    }
+
+    main {
+      margin-left: 250px;
+      padding: 2rem;
+      animation: fadeIn 0.8s ease-in;
+      background: rgba(255,255,255,0.95);
+      min-height: 100vh;
+      border-radius: 20px 0 0 0;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      color: #1a1a2e;
+      margin-bottom: 0.2rem;
+      animation: slideDown 0.5s ease-out;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+
+    header p {
+      color: #555;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    .card-container {
+      display: flex;
+      gap: 2rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      padding: 2rem;
+      border-radius: 15px;
+      flex: 1;
+      border: 2px solid #e9ecef;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      min-width: 280px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.6s forwards;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+      border-color: #ffd700;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.2s; }
+    .card:nth-child(2) { animation-delay: 0.4s; }
+    .card:nth-child(3) { animation-delay: 0.6s; }
+
+    .card h4 {
+      color: #1a1a2e;
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card p {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #2d5016;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .money-symbol {
+      color: #ffd700;
+      font-size: 1.2em;
+    }
+
+    /* Animations */
+    @keyframes slideInLeft {
+      0% { transform: translateX(-100%); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes slideDown {
+      0% { transform: translateY(-20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <script src="frontend/js/api.js"></script>
+  <script>
+    // Redirect if not logged in
+    if (!api.isAuthenticated()) {
+      alert("Please log in first.");
+      window.location.href = "login.html";
+    }
+  </script>
+
+  <div class="sidebar">
+    <h2>MoneyVault</h2>
+    <ul>
+      <li><a href="dashboard.html"><i class="fas fa-chart-line"></i> Wealth Dashboard</a></li>
+      <li><a href="accounts.html"><i class="fas fa-university"></i> Money Accounts</a></li>
+      <li><a href="transactions.html"><i class="fas fa-money-bill-transfer"></i> Transactions</a></li>
+      <li><a href="budgets.html"><i class="fas fa-piggy-bank"></i> Budget Control</a></li>
+      <li><a href="bills.html"><i class="fas fa-file-invoice-dollar"></i> Bill Manager</a></li>
+      <li><a href="emi.html"><i class="fas fa-hand-holding-dollar"></i> Loan & EMI</a></li>
+      <li><a href="profile.html"><i class="fas fa-user-tie"></i> Vault Profile</a></li>
+      <li><a href="#" onclick="logout()"><i class="fas fa-door-open"></i> Exit Vault</a></li>
+    </ul>
+  </div>
+
+  <main>
+    <header>
+      <h1 id="user-greeting">💰 Welcome, Wealth Builder</h1>
+      <p>Your personal financial empire awaits - Monitor, Manage, Multiply your Money</p>
+    </header>
+
+    <section class="card-container">
+      <div class="card">
+        <h4>💎 Total Wealth</h4>
+        <p id="total-balance"><span class="money-symbol">₹</span>0</p>
+      </div>
+      <div class="card">
+        <h4>💸 Monthly Income</h4>
+        <p id="monthly-income"><span class="money-symbol">₹</span>0</p>
+      </div>
+      <div class="card">
+        <h4>💰 Monthly Expenses</h4>
+        <p id="monthly-expenses"><span class="money-symbol">₹</span>0</p>
+      </div>
+    </section>
+
+    <section class="card-container" style="margin-top: 1rem;">
+      <div class="card" style="flex: 2;">
+        <h4>🔄 Recent Money Movements</h4>
+        <ul id="recentList" style="padding-left: 1rem; list-style: disc;"></ul>
+      </div>
+
+      <div class="card" style="flex: 1;">
+        <h4>🎯 Budget Control Center</h4>
+        <p>You’ve used <span id="usedBudget">₹0</span> of your ₹30,000 monthly budget.</p>
+        <div style="background: #eee; border-radius: 8px; height: 12px; overflow: hidden;">
+          <div id="budgetBar" style="height: 100%; width: 0%; background: #3f87f5;"></div>
+        </div>
+      </div>
+
+      <div class="card" style="flex: 1;">
+        <h4>💡 Wealth Building Tip</h4>
+        <p id="financeTip">Start saving smart!</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Load dashboard data from API
+    async function loadDashboardData() {
+      try {
+        // Get user data
+        const userData = JSON.parse(localStorage.getItem('moneyvault_user')) || JSON.parse(localStorage.getItem('savii_user')) || { firstname: 'Wealth Builder' };
+        document.getElementById('user-greeting').innerHTML = `💰 Welcome back, ${userData.firstname}!`;
+
+        // Fetch dashboard data from API
+        const response = await api.getDashboardData();
+
+        if (response.success) {
+          const data = response.data;
+
+          // Update wealth summary cards
+          document.getElementById('total-balance').innerHTML = `<span class="money-symbol">₹</span>${data.summary.total_balance.toFixed(2)}`;
+          document.getElementById('monthly-income').innerHTML = `<span class="money-symbol">₹</span>${data.summary.monthly_income.toFixed(2)}`;
+          document.getElementById('monthly-expenses').innerHTML = `<span class="money-symbol">₹</span>${data.summary.monthly_expenses.toFixed(2)}`;
+
+          // Budget Overview
+          const totalBudget = data.summary.total_budget || 30000; // fallback to 30000
+          const usedBudget = data.summary.total_spent || 0;
+          const usedPercent = totalBudget > 0 ? Math.min((usedBudget / totalBudget) * 100, 100) : 0;
+
+          document.getElementById("usedBudget").textContent = `₹${usedBudget.toFixed(2)}`;
+          document.getElementById("budgetBar").style.width = `${usedPercent}%`;
+
+          // Recent Money Movements
+          const recentList = document.getElementById("recentList");
+          if (data.recent_transactions && data.recent_transactions.length > 0) {
+            recentList.innerHTML = data.recent_transactions.map(txn =>
+              `<li style="padding: 8px; margin: 5px 0; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${txn.type === 'Income' ? '#00b894' : '#d63031'};">
+                💰 ${txn.date} - ${txn.category || txn.type}: <strong>₹${txn.amount}</strong>
+              </li>`
+            ).join('');
+          } else {
+            recentList.innerHTML = '<li style="text-align: center; color: #6c757d; font-style: italic;">💸 No recent money movements</li>';
+          }
+
+          // Financial Tip
+          document.getElementById("financeTip").textContent = data.financial_tip;
+
+        } else {
+          console.error('Failed to load dashboard data:', response.message);
+          // Fallback to show basic user info
+          const userData = JSON.parse(localStorage.getItem('moneyvault_user')) || JSON.parse(localStorage.getItem('savii_user')) || { firstname: 'Wealth Builder' };
+          document.getElementById('user-greeting').innerHTML = `💰 Welcome back, ${userData.firstname}!`;
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        // Show error message to user
+        alert('Failed to load dashboard data. Please refresh the page.');
+      }
+    }
+
+    // Add vault exit functionality
+    function logout() {
+      if (confirm('🔐 Are you sure you want to exit your MoneyVault?')) {
+        api.logout();
+      }
+    }
+
+    // Load data when page loads
+    document.addEventListener('DOMContentLoaded', loadDashboardData);
+  </script>
+</body>
+</html>

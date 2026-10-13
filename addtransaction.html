@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Transaction - MoneyVault</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: 'Poppins', sans-serif;
+      background: #fff;
+      color: #000;
+    }
+
+    .back-btn {
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 2rem;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      max-width: 400px;
+    }
+
+    label {
+      margin-top: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    input, select {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button class="back-btn" onclick="window.location.href='dashboard.html'">&larr; Back</button>
+  <h2>Add Transaction</h2>
+  <form id="transaction-form">
+    <label for="date">Date</label>
+    <input type="date" id="date" required>
+
+    <label for="description">Description</label>
+    <input type="text" id="description" required>
+
+    <label for="type">Type</label>
+    <select id="type" required>
+      <option value="Income">Income</option>
+      <option value="Expense">Expense</option>
+    </select>
+
+    <label for="category">Category (optional)</label>
+    <input type="text" id="category" placeholder="e.g., Salary, Food, Transport, Entertainment">
+
+    <label for="account">Account (optional)</label>
+    <select id="account">
+      <option value="">Select an account to update balance</option>
+    </select>
+
+    <label for="amount">Amount</label>
+    <input type="number" id="amount" step="0.01" min="0.01" required>
+
+    <button type="submit">Add Transaction</button>
+  </form>
+
+  <script src="frontend/js/api.js"></script>
+  <script>
+    // Check authentication
+    if (!api.isAuthenticated()) {
+      alert("Please log in first.");
+      window.location.href = "login.html";
+    }
+
+    const form = document.getElementById('transaction-form');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const accountId = document.getElementById('account').value;
+      const transaction = {
+        date: document.getElementById('date').value,
+        description: document.getElementById('description').value,
+        type: document.getElementById('type').value,
+        amount: parseFloat(document.getElementById('amount').value),
+        category: document.getElementById('category').value.trim() || null
+      };
+
+      // Only add account_id if an account is selected
+      if (accountId) {
+        transaction.account_id = parseInt(accountId);
+      }
+
+      // Basic validation
+      if (!transaction.date || !transaction.description || !transaction.type || isNaN(transaction.amount) || transaction.amount <= 0) {
+        alert('Please fill in all fields with valid data');
+        return;
+      }
+
+      try {
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Adding...';
+        submitBtn.disabled = true;
+
+        const response = await api.createTransaction(transaction);
+
+        if (response.success) {
+          alert('Transaction added successfully!');
+          form.reset();
+          // Set today's date as default
+          document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        } else {
+          alert(response.message || 'Failed to add transaction');
+        }
+      } catch (error) {
+        console.error('Add transaction error:', error);
+        alert(error.message || 'Failed to add transaction. Please try again.');
+      } finally {
+        // Reset button state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.textContent = 'Add Transaction';
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Load accounts and set today's date as default
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('date').value = new Date().toISOString().split('T')[0];
+
+      // Load user accounts
+      try {
+        const response = await api.getAccounts();
+        if (response.success) {
+          const accountSelect = document.getElementById('account');
+          response.data.accounts.forEach(account => {
+            const option = document.createElement('option');
+            option.value = account.id;
+            option.textContent = `${account.name} (${account.bank_name}) - ₹${parseFloat(account.balance).toFixed(2)}`;
+            accountSelect.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading accounts:', error);
+      }
+    });
+  </script>
+</body>
+</html>
